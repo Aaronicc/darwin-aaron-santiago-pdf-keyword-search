@@ -1,57 +1,48 @@
-# main.py
+from flask import Flask, render_template, request
+import PyPDF2
 import os
 import re
-from flask import Flask, request, render_template, redirect, url_for
-import PyPDF2
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Store searched keywords for re-click
-keyword_history = set()
+# Store keyword history
+keyword_history = []
 
-def extract_lines_with_keywords(pdf_path, keywords):
-    results = []
-    with open(pdf_path, "rb") as f:
-        reader = PyPDF2.PdfReader(f)
-        for page_num, page in enumerate(reader.pages):
-            text = page.extract_text()
-            if not text:
-                continue
-            lines = text.splitlines()
-            for line in lines:
-                for keyword in keywords:
-                    if keyword.lower() in line.lower():
-                        match = re.search(keyword, line, re.IGNORECASE)
-                        matched_text = match.group() if match else keyword
-                        date_match = re.search(r"\d{2} [A-Za-z]{3} \d{2}", line)
-                        date_str = date_match.group() if date_match else "No date found"
-                        results.append(
-                            f"✅ Page {page_num + 1} | 📅 Date: {date_str} | 🔍 Matched: '{matched_text}' | 💬 Line: {line.strip()}"
-                        )
-                        break
-    return results
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def index():
     results = []
     keywords = []
-    if request.method == 'POST':
-        file = request.files.get('pdf_file')
-        raw_keywords = request.form.get('keywords', '')
-        keywords = [k.strip() for k in raw_keywords.split(',') if k.strip()]
 
-        # Save searched keywords
-        keyword_history.update(keywords)
+    if request.method == "POST":
+        uploaded_file = request.files["pdf_file"]
+        raw_keywords = request.form["keywords"]
 
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            results = extract_lines_with_keywords(filepath, keywords)
-    return render_template('index.html', results=results, keywords=keywords, history=sorted(keyword_history))
+        if uploaded_file and raw_keywords:
+            keywords = [kw.strip() for kw in raw_keywords.split(",") if kw.strip()]
+            keyword_history.extend([kw for kw in keywords if kw not in keyword_history])
 
-if __name__ == '__main__':
-    app.run(debug=True)
+            pdf_path = os.path.join(UPLOAD_FOLDER, uploaded_file.filename)
+            uploaded_file.save(pdf_path)
+
+            # PDF reading
+            with open(pdf_path, "rb") as f:
+                reader = PyPDF2.PdfReader(f)
+                for page_num, page in enumerate(reader.pages):
+                    text = page.extract_text()
+                    if text:
+                        lines = text.split("\n")
+                        for line in lines:
+                            for keyword in keywords:
+                                if keyword.lower() in line.lower():
+                                    highlighted_line = re.sub(
+                                        f"({re.escape(keyword)})",
+                                        r"<mark>\1</mark>",
+                                        line,
+                                        flags=re.IGNORECASE,
+                                    )
+                                    results.append(f"<strong>Page {page_num + 1}</strong>: {highlighted_line}")
+                                    break  # Avoid repeating if multiple keywords hit in one line
+
+    return render_template("index.html", results=results, keywords=keywords, history=keyword_history)
