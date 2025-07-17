@@ -15,10 +15,14 @@
             color: #333;
         }
         .result {
-            margin-bottom: 10px;
-            background: #e6f7ff;
+            margin-bottom: 15px;
             padding: 10px;
-            border-left: 5px solid #1890ff;
+            background: #f9f9f9;
+            border-left: 5px solid #4CAF50;
+        }
+        mark {
+            background-color: yellow;
+            font-weight: bold;
         }
         .select-btn {
             margin-left: 10px;
@@ -60,29 +64,46 @@
     {% if results %}
         <h3>Search Results:</h3>
         {% for result in results %}
-            <div class="result">{{ result }}</div>
+            <div class="result">{{ result|safe }}</div>
         {% endfor %}
     {% elif keywords %}
         <p>No matches found for: <strong>{{ keywords|join(', ') }}</strong></p>
     {% endif %}
 
-    <script>
-        function addKeyword(kw) {
-            let input = document.getElementById("keywords");
-            if (!input.value.includes(kw)) {
-                if (input.value.trim() !== "") {
-                    input.value += "," + kw;
-                } else {
-                    input.value = kw;
-                }
-            }
-        }
+    {% if keyword_history %}
+<h3 class="mt-6 text-lg font-semibold">Previously Searched Keywords:</h3>
+<div class="keyword-history mb-4">
+    {% for kw in keyword_history %}
+        <a onclick="addKeyword('{{ kw }}')" class="cursor-pointer inline-block bg-gray-200 hover:bg-blue-200 text-sm text-gray-800 px-2 py-1 rounded m-1">{{ kw }}</a>
+    {% endfor %}
+    <button type="button" onclick="selectKeywords()" class="ml-2 px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">Select All</button>
+</div>
+{% endif %}
 
-        function selectKeywords() {
-            let input = document.getElementById("keywords");
-            input.focus();
-            input.select();
+<script>
+    function addKeyword(kw) {
+        let input = document.getElementById("keywords");
+        let current = input.value.split(",").map(k => k.trim()).filter(k => k);
+        if (!current.includes(kw)) {
+            current.push(kw);
+            input.value = current.join(", ");
         }
-    </script>
+    }
+
+    function selectKeywords() {
+        const input = document.getElementById("keywords");
+        const historyTags = document.querySelectorAll(".keyword-history a");
+        const selected = new Set(input.value.split(",").map(k => k.trim()));
+
+        historyTags.forEach(tag => {
+            const kw = tag.textContent.trim();
+            selected.add(kw);
+        });
+
+        input.value = Array.from(selected).join(", ");
+        input.focus();
+    }
+</script>
+
 </body>
 </html>
