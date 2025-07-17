@@ -1,35 +1,74 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>DarwinSantiago PDF Keyword Search</title>
+  <meta charset="UTF-8">
+  <title>PDF Keyword Search - DarwinSantiago</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 30px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .results {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .keyword-list {
+      margin-top: 10px;
+    }
+    .keyword-list label {
+      margin-right: 15px;
+    }
+    .line {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #e6f0ff;
+      border-left: 4px solid #3366cc;
+    }
+  </style>
 </head>
 <body>
-    <h1>PDF Keyword Search</h1>
-    <form method="post" enctype="multipart/form-data">
-        <label>Select PDF:</label><br>
-        <input type="file" name="pdf" required><br><br>
-        <label>Enter keywords (comma-separated):</label><br>
-        <input type="text" name="keywords" id="keywordInput" required><br><br>
-        <input type="submit" value="Search">
-    </form>
+  <h1>📄 PDF Keyword Search</h1>
 
-    <h3>Previous Keywords:</h3>
-    {% for kw in keywords %}
-        <button onclick="document.getElementById('keywordInput').value='{{ kw }}'">{{ kw }}</button>
-    {% endfor %}
+  <form method="post" enctype="multipart/form-data">
+    <label>Select PDF file:</label>
+    <input type="file" name="pdf_file" accept=".pdf" required><br><br>
 
-    {% if filename %}
-        <h2>Results for: {{ filename }}</h2>
-        {% if results %}
-            <ul>
-            {% for result in results %}
-                <li>{{ result }}</li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <p>No matches found.</p>
-        {% endif %}
+    <label>Enter keywords (comma-separated):</label><br>
+    <input type="text" name="keywords" placeholder="e.g., deposit, payment"><br><br>
+
+    {% if keywords %}
+      <div class="keyword-list">
+        <strong>Previous keywords:</strong><br>
+        {% for keyword in keywords %}
+          <label>
+            <input type="checkbox" name="selected_keywords" value="{{ keyword }}">
+            {{ keyword }}
+          </label>
+        {% endfor %}
+      </div><br>
     {% endif %}
+
+    <button type="submit">Search</button>
+  </form>
+
+  {% if results %}
+    <div class="results">
+      <h2>🔍 Search Results:</h2>
+      {% for line in results %}
+        <div class="line">{{ line }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
 </body>
 </html>
