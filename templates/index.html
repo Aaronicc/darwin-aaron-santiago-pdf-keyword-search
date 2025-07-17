@@ -20,6 +20,18 @@
             padding: 10px;
             border-left: 5px solid #1890ff;
         }
+        .select-btn {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .select-btn:hover {
+            background: #007acc;
+        }
     </style>
 </head>
 <body>
@@ -27,8 +39,10 @@
     <form method="POST" enctype="multipart/form-data">
         <label><strong>PDF File:</strong></label>
         <input type="file" name="pdf_file" required><br><br>
+
         <label><strong>Keywords (comma-separated):</strong></label>
         <input type="text" name="keywords" id="keywords" placeholder="e.g., DWP, payment" required>
+        <button type="button" class="select-btn" onclick="selectKeywords()">Select All</button>
         <button type="submit">Search</button>
     </form>
 
@@ -62,6 +76,12 @@
                     input.value = kw;
                 }
             }
+        }
+
+        function selectKeywords() {
+            let input = document.getElementById("keywords");
+            input.focus();
+            input.select();
         }
     </script>
 </body>
