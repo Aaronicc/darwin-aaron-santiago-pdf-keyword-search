@@ -1,101 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>PDF Keyword Search - Darwin Santiago</title>
+    <title>PDF Keyword Search</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f4f4f4;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        input[type="text"], input[type="file"], button {
-            padding: 10px;
-            margin: 10px 0;
-            width: 100%;
-            font-size: 16px;
-        }
-        button {
-            background-color: #007bff;
-            border: none;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #e6f7ff;
-            border-left: 4px solid #007bff;
-        }
-        .keywords-box {
-            margin: 10px 0;
-            padding: 10px;
-            background: #f1f1f1;
-            border-radius: 5px;
-        }
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-        }
-        .checkbox-group label {
-            margin-right: 15px;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+        form, .results, .summary-box { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 10px; }
+        mark { background-color: yellow; font-weight: bold; }
+        .keyword-list label { display: inline-block; margin-right: 10px; }
+        button { margin-top: 10px; }
     </style>
     <script>
         function selectAllKeywords() {
-            const checkboxes = document.querySelectorAll('input[name="previous_keywords"]');
+            const checkboxes = document.querySelectorAll(".keyword-checkbox");
             checkboxes.forEach(cb => cb.checked = true);
         }
     </script>
 </head>
 <body>
-    <div class="container">
-        <h1>🔍 PDF Keyword Search</h1>
+    <h1>📄 PDF Keyword Search</h1>
+    <form method="post" enctype="multipart/form-data">
+        <label>Upload PDF:</label><br>
+        <input type="file" name="pdf_file" accept="application/pdf" required><br><br>
 
-        <form method="POST" enctype="multipart/form-data">
-            <label for="pdf_file"><strong>Upload PDF:</strong></label>
-            <input type="file" name="pdf_file" required>
+        <label>Enter Keywords (comma separated):</label><br>
+        <input type="text" name="keywords" style="width: 300px;"><br><br>
 
-            <label for="keywords"><strong>Enter keywords (comma-separated):</strong></label>
-            <input type="text" name="keywords">
-
-            {% if previous_keywords %}
-                <div class="keywords-box">
-                    <strong>Previously Searched Keywords:</strong>
-                    <button type="button" onclick="selectAllKeywords()">Select All</button>
-                    <div class="checkbox-group">
-                        {% for keyword in previous_keywords %}
-                            <label>
-                                <input type="checkbox" name="previous_keywords" value="{{ keyword }}">
-                                {{ keyword }}
-                            </label>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-
-            <button type="submit">Search</button>
-        </form>
-
-        {% if results %}
-            <h2>Results:</h2>
-            {% for result in results %}
-                <div class="result">{{ result }}</div>
+        {% if previous_keywords %}
+        <div class="keyword-list">
+            <strong>Previously Searched Keywords:</strong><br>
+            {% for kw in previous_keywords %}
+                <label>
+                    <input type="checkbox" name="previous_keywords" value="{{ kw }}" class="keyword-checkbox">
+                    {{ kw }}
+                </label>
             {% endfor %}
+        </div>
+        <button type="button" onclick="selectAllKeywords()">Select All</button><br><br>
         {% endif %}
-    </div>
+
+        <button type="submit">🔍 Search</button>
+    </form>
+
+    {% if summary %}
+        <div class="summary-box">
+            <h3>📊 Summary of Findings</h3>
+            <p><strong>Total Matches:</strong> {{ summary.total_matches }}</p>
+            <p><strong>Matched Keywords:</strong> {{ summary.unique_keywords | join(", ") }}</p>
+        </div>
+    {% endif %}
+
+    {% if results %}
+        <div class="results">
+            <h2>🔎 Search Results</h2>
+            <ul>
+                {% for r in results %}
+                    <li>{{ r | safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </body>
 </html>
