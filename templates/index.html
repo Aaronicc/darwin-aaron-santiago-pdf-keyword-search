@@ -1,35 +1,35 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PDF Keyword Search</title>
+    <title>DarwinSantiago PDF Keyword Search</title>
 </head>
 <body>
-    <h2>Upload a PDF & Search Keywords</h2>
+    <h1>PDF Keyword Search</h1>
     <form method="post" enctype="multipart/form-data">
-        <label>PDF File:</label>
+        <label>Select PDF:</label><br>
         <input type="file" name="pdf" required><br><br>
-
-        <label>Keywords (comma-separated):</label>
-        <input type="text" name="keywords" required><br><br>
-
-        <button type="submit">Search</button>
+        <label>Enter keywords (comma-separated):</label><br>
+        <input type="text" name="keywords" id="keywordInput" required><br><br>
+        <input type="submit" value="Search">
     </form>
 
-    <hr>
+    <h3>Previous Keywords:</h3>
+    {% for kw in keywords %}
+        <button onclick="document.getElementById('keywordInput').value='{{ kw }}'">{{ kw }}</button>
+    {% endfor %}
 
-    {% if results %}
-        <h3>Search Results:</h3>
-        <ul>
+    {% if filename %}
+        <h2>Results for: {{ filename }}</h2>
+        {% if results %}
+            <ul>
             {% for result in results %}
-                <li>
-                    <strong>Page {{ result.page }}:</strong><br>
-                    <em>Matched Line:</em> {{ result.line }}<br>
-                    <em>Matched Keywords:</em> {{ result.keywords | join(", ") }}
-                </li>
+                <li>{{ result }}</li>
             {% endfor %}
-        </ul>
-    {% elif request.method == 'POST' %}
-        <p><strong>No matches found.</strong></p>
+            </ul>
+        {% else %}
+            <p>No matches found.</p>
+        {% endif %}
     {% endif %}
 </body>
 </html>
