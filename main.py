@@ -7,33 +7,40 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Store previously searched keywords
 keyword_history = set()
+
 
 def extract_keyword_matches(pdf_path, keywords):
     results = []
     keyword_counts = {kw.lower(): 0 for kw in keywords}
 
-    with fitz.open(pdf_path) as doc:
-        for page_num, page in enumerate(doc):
-            lines = page.get_text("text").split('\n')
-            for line in lines:
-                for keyword in keywords:
-                    if keyword.lower() in line.lower():
-                        keyword_counts[keyword.lower()] += 1
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page_num, page in enumerate(doc):
+                try:
+                    lines = page.get_text("text").split('\n')
+                    for line in lines:
+                        for keyword in keywords:
+                            if keyword.lower() in line.lower():
+                                keyword_counts[keyword.lower()] += 1
 
-                        # Highlight all variants of the keyword
-                        highlighted_line = line
-                        highlighted_line = highlighted_line.replace(keyword, f"<mark>{keyword}</mark>")
-                        highlighted_line = highlighted_line.replace(keyword.upper(), f"<mark>{keyword.upper()}</mark>")
-                        highlighted_line = highlighted_line.replace(keyword.lower(), f"<mark>{keyword.lower()}</mark>")
+                                # Highlight keyword in line
+                                highlighted_line = line
+                                highlighted_line = highlighted_line.replace(keyword, f"<mark>{keyword}</mark>")
+                                highlighted_line = highlighted_line.replace(keyword.upper(), f"<mark>{keyword.upper()}</mark>")
+                                highlighted_line = highlighted_line.replace(keyword.lower(), f"<mark>{keyword.lower()}</mark>")
 
-                        results.append(
-                            f"✅ Page {page_num + 1} | 🔍 Matched: '{keyword}' | 💬 Line: {highlighted_line.strip()}"
-                        )
-                        break  # Prevent duplicate match for multiple keywords in the same line
+                                results.append(
+                                    f"✅ Page {page_num + 1} | 🔍 Matched: '{keyword}' | 💬 Line: {highlighted_line.strip()}"
+                                )
+                                break
+                except Exception as e:
+                    results.append(f"⚠️ Error reading page {page_num + 1}: {str(e)}")
+    except Exception as e:
+        results.append(f"❌ Failed to open PDF: {str(e)}")
 
     return results, keyword_counts
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -57,13 +64,12 @@ def index():
             except Exception as e:
                 results = [f"❌ Error reading PDF: {str(e)}"]
 
-    return render_template(
-        "index.html",
-        results=results,
-        keywords=keywords,
-        keyword_history=sorted(keyword_history),
-        counts=counts
-    )
+    return render_template("index.html",
+                           results=results,
+                           keywords=keywords,
+                           keyword_history=sorted(keyword_history),
+                           counts=counts)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
