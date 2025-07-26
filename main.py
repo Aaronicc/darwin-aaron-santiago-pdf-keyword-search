@@ -1,12 +1,13 @@
 import os
 import fitz  # PyMuPDF
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Store previously searched keywords
 keyword_history = set()
 
 def extract_keyword_matches(pdf_path, keywords):
@@ -20,14 +21,17 @@ def extract_keyword_matches(pdf_path, keywords):
                 for keyword in keywords:
                     if keyword.lower() in line.lower():
                         keyword_counts[keyword.lower()] += 1
-                        matched_word = next((kw for kw in keywords if kw.lower() in line.lower()), keyword)
-                        # Format result line with emoji and bold keyword
+
+                        # Highlight all variants of the keyword
                         highlighted_line = line
-                        for kw in keywords:
-                            highlighted_line = highlighted_line.replace(kw, f"**{kw}**")
-                            highlighted_line = highlighted_line.replace(kw.upper(), f"**{kw.upper()}**")
-                            highlighted_line = highlighted_line.replace(kw.lower(), f"**{kw.lower()}**")
-                        results.append(f"✅ Page {page_num + 1} | 🔍 Matched: '{matched_word}' | 💬 Line: {line.strip()}")
+                        highlighted_line = highlighted_line.replace(keyword, f"<mark>{keyword}</mark>")
+                        highlighted_line = highlighted_line.replace(keyword.upper(), f"<mark>{keyword.upper()}</mark>")
+                        highlighted_line = highlighted_line.replace(keyword.lower(), f"<mark>{keyword.lower()}</mark>")
+
+                        results.append(
+                            f"✅ Page {page_num + 1} | 🔍 Matched: '{keyword}' | 💬 Line: {highlighted_line.strip()}"
+                        )
+                        break  # Prevent duplicate match for multiple keywords in the same line
 
     return results, keyword_counts
 
@@ -41,7 +45,6 @@ def index():
         uploaded_file = request.files["pdf_file"]
         keywords_text = request.form.get("keywords", "")
         keywords = [kw.strip() for kw in keywords_text.split(",") if kw.strip()]
-
         keyword_history.update(keywords)
 
         if uploaded_file and uploaded_file.filename.endswith(".pdf"):
@@ -54,11 +57,13 @@ def index():
             except Exception as e:
                 results = [f"❌ Error reading PDF: {str(e)}"]
 
-    return render_template("index.html",
-                           results=results,
-                           keywords=keywords,
-                           keyword_history=sorted(keyword_history),
-                           counts=counts)
+    return render_template(
+        "index.html",
+        results=results,
+        keywords=keywords,
+        keyword_history=sorted(keyword_history),
+        counts=counts
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
