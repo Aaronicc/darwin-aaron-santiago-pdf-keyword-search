@@ -132,7 +132,7 @@ def add_keyword():
 @app.route('/delete/<keyword>', methods=['POST'])
 def delete_keyword(keyword):
     password = request.form.get('password')
-    if password == 'yourpassword':
+    if password == 'darwin123':
         delete_keyword_from_db(keyword)
         flash('Keyword deleted')
     else:
