@@ -9,7 +9,7 @@ app.secret_key = 'your_secret_key'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-DB_FILE = 'keywords.db'
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keywords.db')
 
 # Initialize DB if not exists
 def init_db():
