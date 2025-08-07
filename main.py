@@ -9,7 +9,7 @@ app.secret_key = 'your_secret_key'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-DATABASE_URL = os.environ.get("postgresql://keywords_db_user:tBhXb4fNgfxaIb1STEK7Um6gBoGwnRtQ@dpg-d2a2da8gjchc73e5sj50-a/keywords_db")  # Provided by Render
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 # Initialize DB if not exists
 def init_db():
