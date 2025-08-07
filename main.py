@@ -1,6 +1,5 @@
- import os
+import os
 import psycopg2
-from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 import fitz  # PyMuPDF
@@ -10,14 +9,11 @@ app.secret_key = 'your_secret_key'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Load DATABASE_URL from environment (Render)
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL')  # This will be set in Render later
 
-def get_connection():
-    return psycopg2.connect(DATABASE_URL, sslmode='require')
-
+# Initialize DB if not exists
 def init_db():
-    with get_connection() as conn:
+    with psycopg2.connect(DATABASE_URL) as conn:
         with conn.cursor() as c:
             c.execute('''
                 CREATE TABLE IF NOT EXISTS keywords (
@@ -25,25 +21,25 @@ def init_db():
                     type TEXT CHECK(type IN ('positive', 'negative'))
                 )
             ''')
-            conn.commit()
+        conn.commit()
 
 init_db()
 
 def get_keywords():
-    with get_connection() as conn:
+    with psycopg2.connect(DATABASE_URL) as conn:
         with conn.cursor() as c:
             c.execute("SELECT keyword FROM keywords WHERE type='positive'")
             pos = [row[0] for row in c.fetchall()]
             c.execute("SELECT keyword FROM keywords WHERE type='negative'")
             neg = [row[0] for row in c.fetchall()]
-    return pos, neg
+        return pos, neg
 
 def add_keyword_to_db(keyword, ktype):
     try:
-        with get_connection() as conn:
+        with psycopg2.connect(DATABASE_URL) as conn:
             with conn.cursor() as c:
                 c.execute("INSERT INTO keywords (keyword, type) VALUES (%s, %s)", (keyword, ktype))
-                conn.commit()
+            conn.commit()
         return True
     except psycopg2.errors.UniqueViolation:
         return False
@@ -51,10 +47,10 @@ def add_keyword_to_db(keyword, ktype):
         return False
 
 def delete_keyword_from_db(keyword):
-    with get_connection() as conn:
+    with psycopg2.connect(DATABASE_URL) as conn:
         with conn.cursor() as c:
-            c.execute("DELETE FROM keywords WHERE keyword = %s", (keyword,))
-            conn.commit()
+            c.execute("DELETE FROM keywords WHERE keyword=%s", (keyword,))
+        conn.commit()
 
 def extract_keyword_matches(pdf_path, pos_keywords, neg_keywords):
     results = []
