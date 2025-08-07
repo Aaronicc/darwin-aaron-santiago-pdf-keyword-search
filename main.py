@@ -9,7 +9,7 @@ app.secret_key = 'your_secret_key'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-DATABASE_URL = os.getenv('DATABASE_URL')  # This will be set in Render later
+DATABASE_URL = os.environ.get("DATABASE_URL")  # Provided by Render
 
 # Initialize DB if not exists
 def init_db():
@@ -32,7 +32,7 @@ def get_keywords():
             pos = [row[0] for row in c.fetchall()]
             c.execute("SELECT keyword FROM keywords WHERE type='negative'")
             neg = [row[0] for row in c.fetchall()]
-        return pos, neg
+            return pos, neg
 
 def add_keyword_to_db(keyword, ktype):
     try:
@@ -41,9 +41,7 @@ def add_keyword_to_db(keyword, ktype):
                 c.execute("INSERT INTO keywords (keyword, type) VALUES (%s, %s)", (keyword, ktype))
             conn.commit()
         return True
-    except psycopg2.errors.UniqueViolation:
-        return False
-    except Exception:
+    except psycopg2.IntegrityError:
         return False
 
 def delete_keyword_from_db(keyword):
@@ -136,7 +134,7 @@ def add_keyword():
 @app.route('/delete/<keyword>', methods=['POST'])
 def delete_keyword(keyword):
     password = request.form.get('password')
-    if password == 'darwin123':
+    if password == 'yourpassword':
         delete_keyword_from_db(keyword)
         flash('Keyword deleted')
     else:
